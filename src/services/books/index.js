@@ -15,6 +15,9 @@ const booksRouter = express.Router()
 
 booksRouter.post("/", async (req, res, next) => {
   try {
+    const newBook = new BookModel(req.body)
+    const { _id } = await newBook.save()
+    res.status(201).send({ _id })
   } catch (error) {
     next(error)
   }
@@ -24,11 +27,7 @@ booksRouter.get("/", async (req, res, next) => {
   try {
     const mongoQuery = q2m(req.query)
     console.log(mongoQuery)
-    const total = await BookModel.countDocuments(mongoQuery.criteria)
-    const books = await BookModel.find(mongoQuery.criteria)
-      .limit(mongoQuery.options.limit)
-      .skip(mongoQuery.options.skip)
-      .sort(mongoQuery.options.sort)
+    const { total, books } = await BookModel.findBookWithAuthors(mongoQuery)
 
     res.send({ links: mongoQuery.links("/books", total), pageTotal: Math.ceil(total / mongoQuery.options.limit), total, books })
   } catch (error) {
